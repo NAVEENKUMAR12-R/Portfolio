@@ -278,7 +278,7 @@ export default function PersonalAdmin({ onSaveNotification }) {
               </a>
             </div>
             <input
-              type="text"
+              type="password"
               placeholder="e.g. a87d89f2-xxxx-xxxx-xxxx-xxxxxxxxxxxx (or set VITE_WEB3FORMS_ACCESS_KEY in .env)"
               value={data.web3formsKey || ''}
               onChange={(e) => handleChange('web3formsKey', e.target.value)}
