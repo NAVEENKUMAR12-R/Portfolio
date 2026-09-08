@@ -24,7 +24,7 @@ export default function PersonalAdmin({ onSaveNotification }) {
     if (!newRole.trim()) return;
     setData((prev) => ({
       ...prev,
-      roles: [...prev.roles, newRole.trim()]
+      roles: [...(prev.roles || []), newRole.trim()]
     }));
     setNewRole('');
   };
@@ -32,12 +32,12 @@ export default function PersonalAdmin({ onSaveNotification }) {
   const handleRemoveRole = (index) => {
     setData((prev) => ({
       ...prev,
-      roles: prev.roles.filter((_, i) => i !== index)
+      roles: (prev.roles || []).filter((_, i) => i !== index)
     }));
   };
 
   const handleStatChange = (index, field, value) => {
-    const updatedStats = [...data.stats];
+    const updatedStats = [...(data.stats || [])];
     updatedStats[index] = { ...updatedStats[index], [field]: value };
     setData((prev) => ({ ...prev, stats: updatedStats }));
   };
@@ -58,9 +58,10 @@ export default function PersonalAdmin({ onSaveNotification }) {
   const handleRemoveStat = (index) => {
     setData((prev) => ({
       ...prev,
-      stats: prev.stats.filter((_, i) => i !== index)
+      stats: (prev.stats || []).filter((_, i) => i !== index)
     }));
   };
+
 
   const handleSave = async () => {
     setSaving(true);
@@ -184,8 +185,9 @@ export default function PersonalAdmin({ onSaveNotification }) {
           Hero Animated Typing Roles
         </h4>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '14px' }}>
-          {data.roles.map((role, idx) => (
+          {(data.roles || []).map((role, idx) => (
             <div
+
               key={idx}
               className="glass-pill"
               style={{ padding: '6px 12px', background: 'rgba(0, 240, 255, 0.08)', borderColor: 'rgba(0, 240, 255, 0.25)', color: '#f8fafc' }}

@@ -11,8 +11,10 @@ import {
   X,
   Eye,
   CheckCircle2,
-  Settings
+  Settings,
+  Lock
 } from 'lucide-react';
+
 import PersonalAdmin from './PersonalAdmin';
 import SkillsAdmin from './SkillsAdmin';
 import ProjectsAdmin from './ProjectsAdmin';
