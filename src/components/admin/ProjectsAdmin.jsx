@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { usePortfolio } from '../../context/PortfolioContext';
-import { Plus, Trash2, Save, ExternalLink, Code2, Layers, CheckCircle2 } from 'lucide-react';
-import { GithubIcon } from '../Icons';
+import { Plus, Trash2, Save } from 'lucide-react';
 
 export default function ProjectsAdmin({ onSaveNotification }) {
-  const { projectsData, setProjectsData } = usePortfolio();
+  const { projectsData, saveSectionToCloud } = usePortfolio();
   const [projects, setProjects] = useState(projectsData || []);
+  const [saving, setSaving] = useState(false);
+
 
   const handleAddProject = () => {
     const newProj = {
@@ -67,10 +68,13 @@ export default function ProjectsAdmin({ onSaveNotification }) {
     }));
   };
 
-  const handleSave = () => {
-    setProjectsData(projects);
-    onSaveNotification('Projects saved successfully!');
+  const handleSave = async () => {
+    setSaving(true);
+    const res = await saveSectionToCloud('projectsData', projects);
+    setSaving(false);
+    onSaveNotification(res?.message || 'Projects saved to cloud database!');
   };
+
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>

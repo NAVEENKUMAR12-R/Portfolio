@@ -10,8 +10,6 @@ import {
   Download,
   X,
   Eye,
-  Sparkles,
-  ShieldCheck,
   CheckCircle2,
   Settings
 } from 'lucide-react';
@@ -23,10 +21,13 @@ import CompetitiveAdmin from './CompetitiveAdmin';
 import AchievementsAdmin from './AchievementsAdmin';
 import LeadershipAdmin from './LeadershipAdmin';
 import BackupAdmin from './BackupAdmin';
+import { usePortfolio } from '../../context/PortfolioContext';
 
 export default function AdminDashboard({ onClose }) {
+  const { cloudStatus } = usePortfolio();
   const [activeTab, setActiveTab] = useState('personal');
   const [toastMessage, setToastMessage] = useState('');
+
 
   const triggerToast = (msg) => {
     setToastMessage(msg);
@@ -41,7 +42,7 @@ export default function AdminDashboard({ onClose }) {
     { id: 'cp', label: 'Competitive Stats', icon: Trophy, color: '#f59e0b' },
     { id: 'achievements', label: 'Achievements', icon: Award, color: '#10b981' },
     { id: 'leadership', label: 'Leadership', icon: Users, color: '#ec4899' },
-    { id: 'backup', label: 'Backup & Export', icon: Download, color: '#00f0ff' }
+    { id: 'backup', label: 'MongoDB & Backup', icon: Download, color: '#00f0ff' }
   ];
 
   return (
@@ -111,7 +112,7 @@ export default function AdminDashboard({ onClose }) {
             <Settings size={20} />
           </div>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
               <span style={{ fontWeight: 800, fontSize: '1.15rem', color: '#f8fafc' }}>
                 Portfolio Admin Cockpit
               </span>
@@ -127,6 +128,46 @@ export default function AdminDashboard({ onClose }) {
               >
                 LIVE EDITOR
               </span>
+
+              {/* MongoDB Status Badge */}
+              <button
+                onClick={() => setActiveTab('backup')}
+                title="Click to view MongoDB Cloud settings"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '2px 10px',
+                  borderRadius: '20px',
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  background:
+                    cloudStatus === 'connected'
+                      ? 'rgba(16, 185, 129, 0.15)'
+                      : 'rgba(245, 158, 11, 0.15)',
+                  color: cloudStatus === 'connected' ? '#10b981' : '#f59e0b',
+                  border: `1px solid ${
+                    cloudStatus === 'connected'
+                      ? 'rgba(16, 185, 129, 0.3)'
+                      : 'rgba(245, 158, 11, 0.3)'
+                  }`
+                }}
+              >
+                <span
+                  style={{
+                    width: '6px',
+                    height: '6px',
+                    borderRadius: '50%',
+                    background: cloudStatus === 'connected' ? '#10b981' : '#f59e0b'
+                  }}
+                />
+                <span>
+                  {cloudStatus === 'connected'
+                    ? 'MongoDB Synced'
+                    : 'Local Mode (No DB URI)'}
+                </span>
+              </button>
             </div>
             <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
               Configure all content, links, metrics, and project data in real-time.
@@ -164,6 +205,7 @@ export default function AdminDashboard({ onClose }) {
           </button>
         </div>
       </header>
+
 
       {/* Main Workspace: Sidebar + Content */}
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>

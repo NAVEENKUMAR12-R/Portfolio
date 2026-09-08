@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { usePortfolio } from '../../context/PortfolioContext';
-import { Plus, Trash2, Save, Sparkles, Tag, Layers } from 'lucide-react';
+import { Plus, Trash2, Save, Tag, Layers } from 'lucide-react';
 
 export default function SkillsAdmin({ onSaveNotification }) {
-  const { skillsData, setSkillsData } = usePortfolio();
+  const { skillsData, saveSectionToCloud } = usePortfolio();
   const [categories, setCategories] = useState(skillsData.categories || []);
   const [newCatName, setNewCatName] = useState('');
   const [newCatColor, setNewCatColor] = useState('#00f0ff');
+  const [saving, setSaving] = useState(false);
+
 
   const handleAddCategory = () => {
     if (!newCatName.trim()) return;
@@ -54,10 +56,13 @@ export default function SkillsAdmin({ onSaveNotification }) {
     }));
   };
 
-  const handleSave = () => {
-    setSkillsData({ categories });
-    onSaveNotification('Skills and categories saved successfully!');
+  const handleSave = async () => {
+    setSaving(true);
+    const res = await saveSectionToCloud('skillsData', { categories });
+    setSaving(false);
+    onSaveNotification(res?.message || 'Skills saved to cloud database!');
   };
+
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>

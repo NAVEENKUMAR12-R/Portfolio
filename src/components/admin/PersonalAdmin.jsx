@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { usePortfolio } from '../../context/PortfolioContext';
-import { Plus, Trash2, Save, User, Link, Sparkles, GraduationCap } from 'lucide-react';
+import { Plus, Trash2, Save, User, Link, GraduationCap } from 'lucide-react';
 
 export default function PersonalAdmin({ onSaveNotification }) {
-  const { personalInfo, setPersonalInfo } = usePortfolio();
+  const { personalInfo, saveSectionToCloud } = usePortfolio();
   const [data, setData] = useState(personalInfo);
   const [newRole, setNewRole] = useState('');
+  const [saving, setSaving] = useState(false);
+
 
   const handleChange = (field, value) => {
     setData((prev) => ({ ...prev, [field]: value }));
@@ -60,10 +62,13 @@ export default function PersonalAdmin({ onSaveNotification }) {
     }));
   };
 
-  const handleSave = () => {
-    setPersonalInfo(data);
-    onSaveNotification('Personal details & links saved successfully!');
+  const handleSave = async () => {
+    setSaving(true);
+    const res = await saveSectionToCloud('personalInfo', data);
+    setSaving(false);
+    onSaveNotification(res?.message || 'Personal details saved to cloud database!');
   };
+
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>

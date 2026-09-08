@@ -1,21 +1,84 @@
 import React, { useState } from 'react';
 import { usePortfolio } from '../../context/PortfolioContext';
-import { Download, Upload, RotateCcw, Copy, Check, AlertTriangle, FileCode } from 'lucide-react';
+import {
+  Download,
+  Upload,
+  RotateCcw,
+  Copy,
+  Check,
+  AlertTriangle,
+  FileCode,
+  Database,
+  Cloud,
+  RefreshCw,
+  Key,
+  CheckCircle2
+} from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 export default function BackupAdmin({ onSaveNotification }) {
-  const { getFullConfig, importFullConfig, resetToDefaults } = usePortfolio();
+  const {
+    getFullConfig,
+    importFullConfig,
+    resetToDefaults,
+    saveFullConfigToCloud,
+    refreshFromCloud,
+    cloudStatus,
+    adminSecret,
+    setAdminSecret,
+    lastSyncedAt,
+    isSyncing
+  } = usePortfolio();
+
   const [jsonText, setJsonText] = useState('');
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedJson, setCopiedJson] = useState(false);
+  const [secretInput, setSecretInput] = useState(adminSecret || '');
+  const [syncingCloud, setSyncingCloud] = useState(false);
 
   const fullConfig = getFullConfig();
 
+  const handlePushToCloud = async () => {
+    setSyncingCloud(true);
+    const res = await saveFullConfigToCloud(fullConfig);
+    setSyncingCloud(false);
+    if (res.success) {
+      try {
+        confetti({ particleCount: 60, spread: 70, origin: { y: 0.7 } });
+      } catch {}
+      onSaveNotification('Full configuration synced to MongoDB Atlas!');
+    } else {
+      onSaveNotification(res.message);
+    }
+  };
+
+  const handlePullFromCloud = async () => {
+    setSyncingCloud(true);
+    await refreshFromCloud();
+    setSyncingCloud(false);
+    onSaveNotification('Refreshed latest data from MongoDB cloud database!');
+  };
+
+  const handleSaveSecret = (e) => {
+    e.preventDefault();
+    setAdminSecret(secretInput.trim());
+    onSaveNotification(
+      secretInput.trim()
+        ? 'Admin Secret key saved in browser storage.'
+        : 'Admin Secret key removed.'
+    );
+  };
+
   const handleExportJSON = () => {
-    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(fullConfig, null, 2));
+    const dataStr =
+      'data:text/json;charset=utf-8,' +
+      encodeURIComponent(JSON.stringify(fullConfig, null, 2));
     const downloadAnchor = document.createElement('a');
     downloadAnchor.setAttribute('href', dataStr);
-    downloadAnchor.setAttribute('download', `naveenkumar_portfolio_config_${new Date().toISOString().slice(0,10)}.json`);
+    downloadAnchor.setAttribute(
+      'download',
+      `naveenkumar_portfolio_config_${new Date().toISOString().slice(0, 10)}.json`
+    );
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();
@@ -62,13 +125,15 @@ export default function BackupAdmin({ onSaveNotification }) {
   };
 
   const generateJsCode = () => {
-    return `export const personalInfo = ${JSON.stringify(fullConfig.personalInfo, null, 2)};\n\n` +
-           `export const skillsData = ${JSON.stringify(fullConfig.skillsData, null, 2)};\n\n` +
-           `export const experienceData = ${JSON.stringify(fullConfig.experienceData, null, 2)};\n\n` +
-           `export const projectsData = ${JSON.stringify(fullConfig.projectsData, null, 2)};\n\n` +
-           `export const competitiveProgrammingData = ${JSON.stringify(fullConfig.competitiveProgrammingData, null, 2)};\n\n` +
-           `export const achievementsData = ${JSON.stringify(fullConfig.achievementsData, null, 2)};\n\n` +
-           `export const leadershipData = ${JSON.stringify(fullConfig.leadershipData, null, 2)};\n`;
+    return (
+      `export const personalInfo = ${JSON.stringify(fullConfig.personalInfo, null, 2)};\n\n` +
+      `export const skillsData = ${JSON.stringify(fullConfig.skillsData, null, 2)};\n\n` +
+      `export const experienceData = ${JSON.stringify(fullConfig.experienceData, null, 2)};\n\n` +
+      `export const projectsData = ${JSON.stringify(fullConfig.projectsData, null, 2)};\n\n` +
+      `export const competitiveProgrammingData = ${JSON.stringify(fullConfig.competitiveProgrammingData, null, 2)};\n\n` +
+      `export const achievementsData = ${JSON.stringify(fullConfig.achievementsData, null, 2)};\n\n` +
+      `export const leadershipData = ${JSON.stringify(fullConfig.leadershipData, null, 2)};\n`
+    );
   };
 
   const handleCopyJsCode = () => {
@@ -86,7 +151,11 @@ export default function BackupAdmin({ onSaveNotification }) {
   };
 
   const handleReset = () => {
-    if (window.confirm('Are you sure you want to reset all data to initial defaults? Any unexported customizations will be lost.')) {
+    if (
+      window.confirm(
+        'Are you sure you want to reset all data to initial defaults? Any unexported customizations will be lost.'
+      )
+    ) {
       resetToDefaults();
       onSaveNotification('Reset all configurations to factory defaults.');
     }
@@ -96,10 +165,123 @@ export default function BackupAdmin({ onSaveNotification }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
       {/* Header */}
       <div style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '16px' }}>
-        <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#f8fafc' }}>Backup, Export & Code Generator</h3>
+        <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#f8fafc' }}>
+          MongoDB Cloud Sync & Backup Hub
+        </h3>
         <p style={{ color: '#94a3b8', fontSize: '0.88rem' }}>
-          Export your configuration to JSON, copy updated code into your Git repo, or import backups.
+          Synchronize data with MongoDB Atlas, set your admin passcode, or download offline backups.
         </p>
+      </div>
+
+      {/* Cloud Sync Center */}
+      <div
+        className="glass-card"
+        style={{
+          padding: '24px',
+          border: '1px solid rgba(0, 240, 255, 0.3)',
+          background: 'linear-gradient(135deg, rgba(0, 240, 255, 0.06), rgba(168, 85, 247, 0.06))'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <Database size={22} color="#00f0ff" />
+            <h4 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#f8fafc' }}>
+              MongoDB Cloud Database Status
+            </h4>
+          </div>
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '4px 12px',
+              borderRadius: '20px',
+              fontSize: '0.8rem',
+              fontWeight: 700,
+              background:
+                cloudStatus === 'connected'
+                  ? 'rgba(16, 185, 129, 0.2)'
+                  : 'rgba(245, 158, 11, 0.2)',
+              color: cloudStatus === 'connected' ? '#10b981' : '#f59e0b',
+              border: `1px solid ${cloudStatus === 'connected' ? 'rgba(16, 185, 129, 0.4)' : 'rgba(245, 158, 11, 0.4)'}`
+            }}
+          >
+            <span
+              style={{
+                width: '8px',
+                height: '8px',
+                borderRadius: '50%',
+                background: cloudStatus === 'connected' ? '#10b981' : '#f59e0b',
+                boxShadow: `0 0 8px ${cloudStatus === 'connected' ? '#10b981' : '#f59e0b'}`
+              }}
+            />
+            <span>
+              {cloudStatus === 'connected'
+                ? 'MongoDB Atlas Connected'
+                : 'Offline / Local Fallback Mode'}
+            </span>
+          </div>
+        </div>
+
+        <p style={{ color: '#94a3b8', fontSize: '0.88rem', marginBottom: '16px' }}>
+          {cloudStatus === 'connected'
+            ? 'Your portfolio is connected to MongoDB Atlas. Changes made in the admin panel are saved to MongoDB in real-time and served to all Vercel visitors.'
+            : 'To enable centralized cloud persistence on Vercel, configure MONGODB_URI in your Vercel Project Settings > Environment Variables.'}
+          {lastSyncedAt && (
+            <span style={{ display: 'block', marginTop: '6px', color: '#64748b', fontSize: '0.78rem' }}>
+              Last Synced: {new Date(lastSyncedAt).toLocaleString()}
+            </span>
+          )}
+        </p>
+
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+          <button
+            onClick={handlePushToCloud}
+            disabled={syncingCloud}
+            className="btn-primary"
+            style={{ padding: '10px 18px', fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: '8px' }}
+          >
+            <Cloud size={16} />
+            <span>{syncingCloud ? 'Syncing...' : 'Push All Data to MongoDB'}</span>
+          </button>
+
+          <button
+            onClick={handlePullFromCloud}
+            disabled={syncingCloud}
+            className="btn-secondary"
+            style={{ padding: '10px 18px', fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: '8px' }}
+          >
+            <RefreshCw size={16} className={syncingCloud ? 'animate-spin' : ''} />
+            <span>Fetch Latest from MongoDB</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Admin Secret Protection Key */}
+      <div className="glass-card" style={{ padding: '24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+          <Key size={18} color="#a855f7" />
+          <h4 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#f8fafc' }}>
+            Admin Passcode / Security Key
+          </h4>
+        </div>
+        <p style={{ color: '#94a3b8', fontSize: '0.88rem', marginBottom: '14px' }}>
+          If you defined an <code>ADMIN_SECRET</code> in your Vercel / <code>.env</code> environment variables, enter it here so your browser can authorize save requests to MongoDB.
+        </p>
+
+        <form onSubmit={handleSaveSecret} style={{ display: 'flex', gap: '10px', maxWidth: '500px' }}>
+          <input
+            type="password"
+            placeholder="Enter ADMIN_SECRET..."
+            value={secretInput}
+            onChange={(e) => setSecretInput(e.target.value)}
+            className="glass-card font-mono"
+            style={{ flex: 1, padding: '8px 14px', color: '#00f0ff', fontSize: '0.88rem', outline: 'none' }}
+          />
+          <button type="submit" className="btn-secondary" style={{ padding: '8px 16px', fontSize: '0.85rem' }}>
+            <span>Save Key</span>
+          </button>
+        </form>
       </div>
 
       {/* Export & Download Card */}
@@ -122,7 +304,11 @@ export default function BackupAdmin({ onSaveNotification }) {
             <span>{copiedJson ? 'JSON Copied!' : 'Copy JSON'}</span>
           </button>
 
-          <button onClick={handleCopyJsCode} className="btn-secondary" style={{ padding: '10px 18px', fontSize: '0.88rem', borderColor: 'rgba(168,85,247,0.3)', color: '#c084fc' }}>
+          <button
+            onClick={handleCopyJsCode}
+            className="btn-secondary"
+            style={{ padding: '10px 18px', fontSize: '0.88rem', borderColor: 'rgba(168,85,247,0.3)', color: '#c084fc' }}
+          >
             {copiedCode ? <Check size={16} /> : <FileCode size={16} />}
             <span>{copiedCode ? 'JS Code Copied!' : 'Copy portfolioData.js Code'}</span>
           </button>
@@ -167,7 +353,14 @@ export default function BackupAdmin({ onSaveNotification }) {
       </div>
 
       {/* Factory Reset Card */}
-      <div className="glass-card" style={{ padding: '24px', border: '1px solid rgba(239, 68, 68, 0.3)', background: 'linear-gradient(145deg, rgba(30, 10, 15, 0.8) 0%, rgba(15, 6, 10, 0.75) 100%)' }}>
+      <div
+        className="glass-card"
+        style={{
+          padding: '24px',
+          border: '1px solid rgba(239, 68, 68, 0.3)',
+          background: 'linear-gradient(145deg, rgba(30, 10, 15, 0.8) 0%, rgba(15, 6, 10, 0.75) 100%)'
+        }}
+      >
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
           <AlertTriangle size={20} color="#ef4444" />
           <h4 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#ef4444' }}>

@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { usePortfolio } from '../../context/PortfolioContext';
-import { Plus, Trash2, Save, Briefcase, Calendar, MapPin } from 'lucide-react';
+import { Plus, Trash2, Save, Briefcase } from 'lucide-react';
 
 export default function ExperienceAdmin({ onSaveNotification }) {
-  const { experienceData, setExperienceData } = usePortfolio();
+  const { experienceData, saveSectionToCloud } = usePortfolio();
   const [experiences, setExperiences] = useState(experienceData || []);
+  const [saving, setSaving] = useState(false);
+
 
   const handleAddExperience = () => {
     const newExp = {
@@ -55,10 +57,13 @@ export default function ExperienceAdmin({ onSaveNotification }) {
     }));
   };
 
-  const handleSave = () => {
-    setExperienceData(experiences);
-    onSaveNotification('Work experience saved successfully!');
+  const handleSave = async () => {
+    setSaving(true);
+    const res = await saveSectionToCloud('experienceData', experiences);
+    setSaving(false);
+    onSaveNotification(res?.message || 'Work experience saved to cloud database!');
   };
+
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>

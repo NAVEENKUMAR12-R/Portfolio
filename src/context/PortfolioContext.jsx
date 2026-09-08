@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import {
   personalInfo as initialPersonal,
   skillsData as initialSkills,
@@ -10,6 +10,7 @@ import {
 } from '../data/portfolioData';
 
 const LOCAL_STORAGE_KEY = 'naveen_portfolio_config_v1';
+const ADMIN_SECRET_KEY = 'portfolio_admin_secret';
 
 const PortfolioContext = createContext(null);
 
@@ -23,6 +24,25 @@ export function PortfolioProvider({ children }) {
       return 'dark';
     }
   });
+
+  const [adminSecret, setAdminSecretState] = useState(() => {
+    try {
+      return localStorage.getItem(ADMIN_SECRET_KEY) || '';
+    } catch {
+      return '';
+    }
+  });
+
+  const setAdminSecret = (secret) => {
+    setAdminSecretState(secret);
+    try {
+      if (secret) {
+        localStorage.setItem(ADMIN_SECRET_KEY, secret);
+      } else {
+        localStorage.removeItem(ADMIN_SECRET_KEY);
+      }
+    } catch {}
+  };
 
   const [personalInfo, setPersonalInfo] = useState(() => {
     try {
@@ -58,9 +78,12 @@ export function PortfolioProvider({ children }) {
       const parsed = JSON.parse(saved);
       return parsed.map((p, idx) => {
         const init = initialProjects[idx] || {};
-        const demoVal = p.demo && p.demo !== '#' && p.demo.trim() !== ''
-          ? p.demo
-          : (init.demo && init.demo !== '#' ? init.demo : p.github || 'https://github.com/NAVEENKUMAR12-R');
+        const demoVal =
+          p.demo && p.demo !== '#' && p.demo.trim() !== ''
+            ? p.demo
+            : init.demo && init.demo !== '#'
+            ? init.demo
+            : p.github || 'https://github.com/NAVEENKUMAR12-R';
         return {
           ...p,
           demo: demoVal
@@ -98,7 +121,59 @@ export function PortfolioProvider({ children }) {
     }
   });
 
-  // Persist on change
+  // Cloud Database Status
+  const [cloudStatus, setCloudStatus] = useState('connecting'); // 'connecting' | 'connected' | 'offline' | 'error'
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [lastSyncedAt, setLastSyncedAt] = useState(null);
+
+  // Fetch portfolio data from MongoDB on initial mount
+  const refreshFromCloud = useCallback(async () => {
+    setIsSyncing(true);
+    try {
+      const res = await fetch('/api/portfolio');
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && json.data) {
+          const {
+            personalInfo: cPersonal,
+            skillsData: cSkills,
+            experienceData: cExp,
+            projectsData: cProj,
+            competitiveProgrammingData: cCp,
+            achievementsData: cAch,
+            leadershipData: cLead,
+            lastUpdated
+          } = json.data;
+
+          if (cPersonal) setPersonalInfo(cPersonal);
+          if (cSkills) setSkillsData(cSkills);
+          if (cExp) setExperienceData(cExp);
+          if (cProj) setProjectsData(cProj);
+          if (cCp) setCompetitiveProgrammingData(cCp);
+          if (cAch) setAchievementsData(cAch);
+          if (cLead) setLeadershipData(cLead);
+
+          setCloudStatus(json.source === 'mongodb' ? 'connected' : 'offline');
+          setLastSyncedAt(lastUpdated || new Date().toISOString());
+        } else {
+          setCloudStatus('offline');
+        }
+      } else {
+        setCloudStatus('offline');
+      }
+    } catch (err) {
+      console.warn('Portfolio Cloud Sync Notice:', err.message);
+      setCloudStatus('offline');
+    } finally {
+      setIsSyncing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshFromCloud();
+  }, [refreshFromCloud]);
+
+  // Persist on change to localStorage (offline cache)
   useEffect(() => {
     try {
       localStorage.setItem(`${LOCAL_STORAGE_KEY}_personal`, JSON.stringify(personalInfo));
@@ -159,6 +234,103 @@ export function PortfolioProvider({ children }) {
 
   const toggleTheme = () => {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  };
+
+  /**
+   * Saves a single section directly to MongoDB Atlas and updates local state.
+   */
+  const saveSectionToCloud = async (sectionName, data) => {
+    setIsSyncing(true);
+    // Optimistic local state update
+    if (sectionName === 'personalInfo') setPersonalInfo(data);
+    else if (sectionName === 'skillsData') setSkillsData(data);
+    else if (sectionName === 'experienceData') setExperienceData(data);
+    else if (sectionName === 'projectsData') setProjectsData(data);
+    else if (sectionName === 'competitiveProgrammingData') setCompetitiveProgrammingData(data);
+    else if (sectionName === 'achievementsData') setAchievementsData(data);
+    else if (sectionName === 'leadershipData') setLeadershipData(data);
+
+    try {
+      const headers = { 'Content-Type': 'application/json' };
+      if (adminSecret) {
+        headers['x-admin-secret'] = adminSecret;
+      }
+
+      const res = await fetch('/api/portfolio', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          section: sectionName,
+          data,
+          adminSecret
+        })
+      });
+
+      const json = await res.json();
+      if (res.ok && json.success) {
+        setCloudStatus('connected');
+        setLastSyncedAt(new Date().toISOString());
+        return { success: true, message: 'Saved to MongoDB Atlas successfully!' };
+      } else {
+        if (res.status === 401) {
+          return { success: false, message: 'Unauthorized: Invalid Admin Secret key.' };
+        }
+        return {
+          success: false,
+          message: json.message || 'Saved locally (MongoDB connection unavailable)'
+        };
+      }
+    } catch (err) {
+      return {
+        success: false,
+        message: 'Saved locally in cache (Could not reach MongoDB: ' + err.message + ')'
+      };
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  /**
+   * Saves the entire portfolio configuration directly to MongoDB Atlas.
+   */
+  const saveFullConfigToCloud = async (config) => {
+    setIsSyncing(true);
+    if (config.personalInfo) setPersonalInfo(config.personalInfo);
+    if (config.skillsData) setSkillsData(config.skillsData);
+    if (config.experienceData) setExperienceData(config.experienceData);
+    if (config.projectsData) setProjectsData(config.projectsData);
+    if (config.competitiveProgrammingData) setCompetitiveProgrammingData(config.competitiveProgrammingData);
+    if (config.achievementsData) setAchievementsData(config.achievementsData);
+    if (config.leadershipData) setLeadershipData(config.leadershipData);
+
+    try {
+      const headers = { 'Content-Type': 'application/json' };
+      if (adminSecret) {
+        headers['x-admin-secret'] = adminSecret;
+      }
+
+      const res = await fetch('/api/portfolio', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          fullConfig: config,
+          adminSecret
+        })
+      });
+
+      const json = await res.json();
+      if (res.ok && json.success) {
+        setCloudStatus('connected');
+        setLastSyncedAt(new Date().toISOString());
+        return { success: true, message: 'Entire portfolio saved to MongoDB Atlas!' };
+      } else {
+        return { success: false, message: json.message || 'Error saving to MongoDB' };
+      }
+    } catch (err) {
+      return { success: false, message: 'Error: ' + err.message };
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   const resetToDefaults = () => {
@@ -222,7 +394,16 @@ export function PortfolioProvider({ children }) {
         setLeadershipData,
         resetToDefaults,
         importFullConfig,
-        getFullConfig
+        getFullConfig,
+        // MongoDB Cloud Persistence API
+        cloudStatus,
+        isSyncing,
+        lastSyncedAt,
+        adminSecret,
+        setAdminSecret,
+        saveSectionToCloud,
+        saveFullConfigToCloud,
+        refreshFromCloud
       }}
     >
       {children}

@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { usePortfolio } from '../../context/PortfolioContext';
-import { Plus, Trash2, Save, Users, Bug, HeartHandshake } from 'lucide-react';
+import { Plus, Trash2, Save } from 'lucide-react';
 
 export default function LeadershipAdmin({ onSaveNotification }) {
-  const { leadershipData, setLeadershipData } = usePortfolio();
+  const { leadershipData, saveSectionToCloud } = usePortfolio();
   const [leadership, setLeadership] = useState(leadershipData || []);
+  const [saving, setSaving] = useState(false);
+
 
   const handleAdd = () => {
     const newLead = {
@@ -48,10 +50,13 @@ export default function LeadershipAdmin({ onSaveNotification }) {
     }));
   };
 
-  const handleSave = () => {
-    setLeadershipData(leadership);
-    onSaveNotification('Leadership and mentorship saved successfully!');
+  const handleSave = async () => {
+    setSaving(true);
+    const res = await saveSectionToCloud('leadershipData', leadership);
+    setSaving(false);
+    onSaveNotification(res?.message || 'Leadership details saved to cloud database!');
   };
+
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>

@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { usePortfolio } from '../../context/PortfolioContext';
-import { Save, Trophy, Code2, TrendingUp, Award, ExternalLink, Trash2, Plus } from 'lucide-react';
+import { Save } from 'lucide-react';
 
 export default function CompetitiveAdmin({ onSaveNotification }) {
-  const { competitiveProgrammingData, setCompetitiveProgrammingData } = usePortfolio();
+  const { competitiveProgrammingData, saveSectionToCloud } = usePortfolio();
   const [data, setData] = useState(competitiveProgrammingData);
+  const [saving, setSaving] = useState(false);
+
 
   const handleSummaryChange = (field, value) => {
     setData((prev) => ({
@@ -45,10 +47,13 @@ export default function CompetitiveAdmin({ onSaveNotification }) {
     }));
   };
 
-  const handleSave = () => {
-    setCompetitiveProgrammingData(data);
-    onSaveNotification('Competitive programming statistics saved successfully!');
+  const handleSave = async () => {
+    setSaving(true);
+    const res = await saveSectionToCloud('competitiveProgrammingData', data);
+    setSaving(false);
+    onSaveNotification(res?.message || 'Competitive programming stats saved to cloud database!');
   };
+
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>

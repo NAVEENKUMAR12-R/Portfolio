@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { usePortfolio } from '../../context/PortfolioContext';
-import { Plus, Trash2, Save, Trophy, Award, Flame, Zap } from 'lucide-react';
+import { Plus, Trash2, Save, Trophy } from 'lucide-react';
 
 export default function AchievementsAdmin({ onSaveNotification }) {
-  const { achievementsData, setAchievementsData } = usePortfolio();
+  const { achievementsData, saveSectionToCloud } = usePortfolio();
   const [achievements, setAchievements] = useState(achievementsData || []);
+  const [saving, setSaving] = useState(false);
+
 
   const handleAdd = () => {
     const newAch = {
@@ -29,10 +31,13 @@ export default function AchievementsAdmin({ onSaveNotification }) {
     setAchievements(achievements.map((a) => (a.id === id ? { ...a, [field]: value } : a)));
   };
 
-  const handleSave = () => {
-    setAchievementsData(achievements);
-    onSaveNotification('Achievements & honors saved successfully!');
+  const handleSave = async () => {
+    setSaving(true);
+    const res = await saveSectionToCloud('achievementsData', achievements);
+    setSaving(false);
+    onSaveNotification(res?.message || 'Achievements saved to cloud database!');
   };
+
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
