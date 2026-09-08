@@ -12,10 +12,22 @@ import Contact from './components/Contact';
 import Footer from './components/Footer';
 import BackgroundParticles from './components/BackgroundParticles';
 import AdminDashboard from './components/admin/AdminDashboard';
-import { PortfolioProvider } from './context/PortfolioContext';
+import AdminAuthModal from './components/admin/AdminAuthModal';
+import { PortfolioProvider, usePortfolio } from './context/PortfolioContext';
 
 function PortfolioMain() {
+  const { setAdminSecret } = usePortfolio();
   const [isAdminOpen, setIsAdminOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    try {
+      const token =
+        localStorage.getItem('portfolio_admin_auth') ||
+        sessionStorage.getItem('portfolio_admin_auth');
+      return Boolean(token);
+    } catch {
+      return false;
+    }
+  });
 
   useEffect(() => {
     const checkAdminRoute = () => {
@@ -47,8 +59,27 @@ function PortfolioMain() {
     }
   };
 
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setIsAdminOpen(false);
+    handleCloseAdmin();
+  };
+
+  const handleAuthenticated = (token) => {
+    setIsAuthenticated(true);
+    setAdminSecret(token);
+  };
+
   return (
-    <div style={{ position: 'relative', minHeight: '100vh', backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)', transition: 'background-color 0.3s ease, color 0.3s ease' }}>
+    <div
+      style={{
+        position: 'relative',
+        minHeight: '100vh',
+        backgroundColor: 'var(--bg-primary)',
+        color: 'var(--text-primary)',
+        transition: 'background-color 0.3s ease, color 0.3s ease'
+      }}
+    >
       {/* Background Interactive Canvas */}
       <BackgroundParticles />
 
@@ -71,8 +102,17 @@ function PortfolioMain() {
       {/* Futuristic Cyber Footer */}
       <Footer />
 
-      {/* Full-Screen Admin Dashboard Modal (Accessible only via /creatoradmin) */}
-      {isAdminOpen && <AdminDashboard onClose={handleCloseAdmin} />}
+      {/* Creator Admin Protection Gateway & Cockpit */}
+      {isAdminOpen && (
+        isAuthenticated ? (
+          <AdminDashboard onClose={handleCloseAdmin} onLogout={handleLogout} />
+        ) : (
+          <AdminAuthModal
+            onAuthenticated={handleAuthenticated}
+            onCancel={handleCloseAdmin}
+          />
+        )
+      )}
     </div>
   );
 }

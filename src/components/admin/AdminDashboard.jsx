@@ -23,15 +23,24 @@ import LeadershipAdmin from './LeadershipAdmin';
 import BackupAdmin from './BackupAdmin';
 import { usePortfolio } from '../../context/PortfolioContext';
 
-export default function AdminDashboard({ onClose }) {
-  const { cloudStatus } = usePortfolio();
+export default function AdminDashboard({ onClose, onLogout }) {
+  const { cloudStatus, setAdminSecret } = usePortfolio();
   const [activeTab, setActiveTab] = useState('personal');
   const [toastMessage, setToastMessage] = useState('');
-
 
   const triggerToast = (msg) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(''), 4000);
+  };
+
+  const handleLogoutClick = () => {
+    if (window.confirm('Are you sure you want to lock the creator dashboard and log out?')) {
+      localStorage.removeItem('portfolio_admin_auth');
+      sessionStorage.removeItem('portfolio_admin_auth');
+      setAdminSecret('');
+      if (onLogout) onLogout();
+      else onClose();
+    }
   };
 
   const navItems = [
@@ -186,6 +195,28 @@ export default function AdminDashboard({ onClose }) {
           </button>
 
           <button
+            onClick={handleLogoutClick}
+            title="Lock & Logout Admin"
+            style={{
+              background: 'rgba(239, 68, 68, 0.12)',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              borderRadius: '10px',
+              padding: '8px 14px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              color: '#f87171',
+              fontSize: '0.82rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <Lock size={15} />
+            <span>Lock</span>
+          </button>
+
+          <button
             onClick={onClose}
             aria-label="Close Admin"
             style={{
@@ -205,6 +236,7 @@ export default function AdminDashboard({ onClose }) {
           </button>
         </div>
       </header>
+
 
 
       {/* Main Workspace: Sidebar + Content */}

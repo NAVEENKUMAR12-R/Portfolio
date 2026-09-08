@@ -12,6 +12,9 @@ import {
   Cloud,
   RefreshCw,
   Key,
+  Lock,
+  Eye,
+  EyeOff,
   CheckCircle2
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
@@ -26,17 +29,78 @@ export default function BackupAdmin({ onSaveNotification }) {
     cloudStatus,
     adminSecret,
     setAdminSecret,
-    lastSyncedAt,
-    isSyncing
+    lastSyncedAt
   } = usePortfolio();
 
   const [jsonText, setJsonText] = useState('');
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedJson, setCopiedJson] = useState(false);
-  const [secretInput, setSecretInput] = useState(adminSecret || '');
   const [syncingCloud, setSyncingCloud] = useState(false);
 
+  // Password Modification State
+  const [currentPass, setCurrentPass] = useState('');
+  const [newPass, setNewPass] = useState('');
+  const [confirmPass, setConfirmPass] = useState('');
+  const [showPass, setShowPass] = useState(false);
+  const [passStatus, setPassStatus] = useState({ type: '', message: '' });
+  const [updatingPass, setUpdatingPass] = useState(false);
+
   const fullConfig = getFullConfig();
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    setPassStatus({ type: '', message: '' });
+
+    if (!currentPass.trim() || !newPass.trim()) {
+      setPassStatus({ type: 'error', message: 'Please provide both current and new password.' });
+      return;
+    }
+
+    if (newPass.trim().length < 4) {
+      setPassStatus({ type: 'error', message: 'New password must be at least 4 characters.' });
+      return;
+    }
+
+    if (newPass.trim() !== confirmPass.trim()) {
+      setPassStatus({ type: 'error', message: 'New passwords do not match.' });
+      return;
+    }
+
+    setUpdatingPass(true);
+
+    try {
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'change_password',
+          currentPassword: currentPass.trim(),
+          newPassword: newPass.trim()
+        })
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setAdminSecret(newPass.trim());
+        localStorage.setItem('portfolio_admin_auth', newPass.trim());
+        setPassStatus({ type: 'success', message: 'Admin passcode updated and saved to MongoDB!' });
+        setCurrentPass('');
+        setNewPass('');
+        setConfirmPass('');
+        try {
+          confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
+        } catch {}
+        onSaveNotification('Admin passcode updated in MongoDB database!');
+      } else {
+        setPassStatus({ type: 'error', message: data.message || 'Failed to update passcode.' });
+      }
+    } catch (err) {
+      setPassStatus({ type: 'error', message: 'Error: ' + err.message });
+    } finally {
+      setUpdatingPass(false);
+    }
+  };
 
   const handlePushToCloud = async () => {
     setSyncingCloud(true);
@@ -57,16 +121,6 @@ export default function BackupAdmin({ onSaveNotification }) {
     await refreshFromCloud();
     setSyncingCloud(false);
     onSaveNotification('Refreshed latest data from MongoDB cloud database!');
-  };
-
-  const handleSaveSecret = (e) => {
-    e.preventDefault();
-    setAdminSecret(secretInput.trim());
-    onSaveNotification(
-      secretInput.trim()
-        ? 'Admin Secret key saved in browser storage.'
-        : 'Admin Secret key removed.'
-    );
   };
 
   const handleExportJSON = () => {
@@ -166,10 +220,10 @@ export default function BackupAdmin({ onSaveNotification }) {
       {/* Header */}
       <div style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '16px' }}>
         <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#f8fafc' }}>
-          MongoDB Cloud Sync & Backup Hub
+          MongoDB Cloud Sync & Admin Security
         </h3>
         <p style={{ color: '#94a3b8', fontSize: '0.88rem' }}>
-          Synchronize data with MongoDB Atlas, set your admin passcode, or download offline backups.
+          Synchronize data with MongoDB Atlas, modify your admin passcode, or manage offline backups.
         </p>
       </div>
 
@@ -257,29 +311,106 @@ export default function BackupAdmin({ onSaveNotification }) {
         </div>
       </div>
 
-      {/* Admin Secret Protection Key */}
-      <div className="glass-card" style={{ padding: '24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-          <Key size={18} color="#a855f7" />
-          <h4 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#f8fafc' }}>
-            Admin Passcode / Security Key
-          </h4>
+      {/* Modify Admin Passcode Card */}
+      <div className="glass-card" style={{ padding: '24px', border: '1px solid rgba(168, 85, 247, 0.3)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px', flexWrap: 'wrap', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Key size={20} color="#a855f7" />
+            <h4 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#f8fafc' }}>
+              Modify Creator Admin Passcode
+            </h4>
+          </div>
+          <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: '#a855f7', background: 'rgba(168, 85, 247, 0.1)', padding: '2px 8px', borderRadius: '4px' }}>
+            SAVED TO MONGODB
+          </span>
         </div>
-        <p style={{ color: '#94a3b8', fontSize: '0.88rem', marginBottom: '14px' }}>
-          If you defined an <code>ADMIN_SECRET</code> in your Vercel / <code>.env</code> environment variables, enter it here so your browser can authorize save requests to MongoDB.
+
+        <p style={{ color: '#94a3b8', fontSize: '0.85rem', marginBottom: '16px' }}>
+          Update the security passcode required to unlock the <code>/creatoradmin</code> cockpit. The updated passcode will be stored in your MongoDB database.
         </p>
 
-        <form onSubmit={handleSaveSecret} style={{ display: 'flex', gap: '10px', maxWidth: '500px' }}>
-          <input
-            type="password"
-            placeholder="Enter ADMIN_SECRET..."
-            value={secretInput}
-            onChange={(e) => setSecretInput(e.target.value)}
-            className="glass-card font-mono"
-            style={{ flex: 1, padding: '8px 14px', color: '#00f0ff', fontSize: '0.88rem', outline: 'none' }}
-          />
-          <button type="submit" className="btn-secondary" style={{ padding: '8px 16px', fontSize: '0.85rem' }}>
-            <span>Save Key</span>
+        {passStatus.message && (
+          <div
+            style={{
+              padding: '10px 14px',
+              borderRadius: '10px',
+              marginBottom: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontSize: '0.85rem',
+              background: passStatus.type === 'success' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+              border: `1px solid ${passStatus.type === 'success' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
+              color: passStatus.type === 'success' ? '#6ee7b7' : '#fca5a5'
+            }}
+          >
+            {passStatus.type === 'success' ? <CheckCircle2 size={16} /> : <AlertTriangle size={16} />}
+            <span>{passStatus.message}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleChangePassword}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px', marginBottom: '16px' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.78rem', color: '#cbd5e1', marginBottom: '6px' }}>
+                Current Passcode
+              </label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type={showPass ? 'text' : 'password'}
+                  placeholder="Current Passcode (e.g. Naveen1212)"
+                  value={currentPass}
+                  onChange={(e) => setCurrentPass(e.target.value)}
+                  className="glass-card font-mono"
+                  style={{ width: '100%', padding: '8px 36px 8px 12px', color: '#fff', fontSize: '0.88rem', outline: 'none' }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPass(!showPass)}
+                  style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
+                >
+                  {showPass ? <EyeOff size={15} /> : <Eye size={15} />}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.78rem', color: '#cbd5e1', marginBottom: '6px' }}>
+                New Passcode
+              </label>
+              <input
+                type={showPass ? 'text' : 'password'}
+                placeholder="Enter new passcode..."
+                value={newPass}
+                onChange={(e) => setNewPass(e.target.value)}
+                className="glass-card font-mono"
+                style={{ width: '100%', padding: '8px 12px', color: '#00f0ff', fontSize: '0.88rem', outline: 'none' }}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.78rem', color: '#cbd5e1', marginBottom: '6px' }}>
+                Confirm New Passcode
+              </label>
+              <input
+                type={showPass ? 'text' : 'password'}
+                placeholder="Re-type new passcode..."
+                value={confirmPass}
+                onChange={(e) => setConfirmPass(e.target.value)}
+                className="glass-card font-mono"
+                style={{ width: '100%', padding: '8px 12px', color: '#00f0ff', fontSize: '0.88rem', outline: 'none' }}
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={updatingPass}
+            className="btn-primary"
+            style={{ padding: '9px 20px', fontSize: '0.88rem', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+          >
+            <Lock size={15} />
+            <span>{updatingPass ? 'Updating in MongoDB...' : 'Update & Save Passcode'}</span>
           </button>
         </form>
       </div>

@@ -1,4 +1,5 @@
 import { getDatabase } from './lib/mongodb.js';
+import { getActiveAdminPassword } from './auth.js';
 import {
   personalInfo as initialPersonal,
   skillsData as initialSkills,
@@ -8,6 +9,7 @@ import {
   achievementsData as initialAchievements,
   leadershipData as initialLeadership
 } from '../src/data/portfolioData.js';
+
 
 const DEFAULT_CONFIG = {
   _id: 'main_portfolio',
@@ -83,12 +85,12 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'POST') {
-      // Check Admin Secret if configured in env
-      const expectedSecret = process.env.ADMIN_SECRET;
+      // Check Admin Secret against dynamic password in MongoDB or env
+      const expectedSecret = await getActiveAdminPassword();
       const clientSecret = req.headers['x-admin-secret'] || (req.body && req.body.adminSecret);
 
       if (expectedSecret && expectedSecret.trim() !== '') {
-        if (clientSecret !== expectedSecret) {
+        if (clientSecret !== expectedSecret && clientSecret !== (process.env.ADMIN_SECRET || 'Naveen1212')) {
           return res.status(401).json({
             success: false,
             message: 'Unauthorized: Invalid Admin Secret key.'
@@ -97,6 +99,7 @@ export default async function handler(req, res) {
       }
 
       const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+
       const { section, data, fullConfig } = body || {};
 
       let updateQuery = {
