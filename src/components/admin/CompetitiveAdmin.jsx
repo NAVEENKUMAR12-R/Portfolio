@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import { usePortfolio } from '../../context/PortfolioContext';
-import { Save } from 'lucide-react';
+import { Save, Trash2, Plus } from 'lucide-react';
 
 export default function CompetitiveAdmin({ onSaveNotification }) {
   const { competitiveProgrammingData, saveSectionToCloud } = usePortfolio();
   const [data, setData] = useState(competitiveProgrammingData);
   const [saving, setSaving] = useState(false);
-
 
   const handleSummaryChange = (field, value) => {
     setData((prev) => ({
@@ -54,7 +53,6 @@ export default function CompetitiveAdmin({ onSaveNotification }) {
     onSaveNotification(res?.message || 'Competitive programming stats saved to cloud database!');
   };
 
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
       {/* Top Bar */}
@@ -63,9 +61,14 @@ export default function CompetitiveAdmin({ onSaveNotification }) {
           <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#f8fafc' }}>Competitive Programming & Contest Stats</h3>
           <p style={{ color: '#94a3b8', fontSize: '0.88rem' }}>Modify LeetCode Knight metrics, ratings, contest counts, and platform URLs.</p>
         </div>
-        <button onClick={handleSave} className="btn-primary" style={{ padding: '10px 20px', fontSize: '0.9rem' }}>
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="btn-primary"
+          style={{ padding: '10px 20px', fontSize: '0.9rem', opacity: saving ? 0.7 : 1, cursor: saving ? 'not-allowed' : 'pointer' }}
+        >
           <Save size={16} />
-          <span>Save Changes</span>
+          <span>{saving ? 'Saving...' : 'Save Changes'}</span>
         </button>
       </div>
 

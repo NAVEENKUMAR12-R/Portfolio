@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import { usePortfolio } from '../../context/PortfolioContext';
-import { Plus, Trash2, Save, User, Link, GraduationCap } from 'lucide-react';
+import { Plus, Trash2, Save } from 'lucide-react';
 
 export default function PersonalAdmin({ onSaveNotification }) {
   const { personalInfo, saveSectionToCloud } = usePortfolio();
   const [data, setData] = useState(personalInfo);
   const [newRole, setNewRole] = useState('');
   const [saving, setSaving] = useState(false);
-
 
   const handleChange = (field, value) => {
     setData((prev) => ({ ...prev, [field]: value }));
@@ -62,14 +61,12 @@ export default function PersonalAdmin({ onSaveNotification }) {
     }));
   };
 
-
   const handleSave = async () => {
     setSaving(true);
     const res = await saveSectionToCloud('personalInfo', data);
     setSaving(false);
     onSaveNotification(res?.message || 'Personal details saved to cloud database!');
   };
-
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
@@ -79,9 +76,14 @@ export default function PersonalAdmin({ onSaveNotification }) {
           <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#f8fafc' }}>Personal Details & Social Links</h3>
           <p style={{ color: '#94a3b8', fontSize: '0.88rem' }}>Modify basic information, headline, academic metrics, roles, and links.</p>
         </div>
-        <button onClick={handleSave} className="btn-primary" style={{ padding: '10px 20px', fontSize: '0.9rem' }}>
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="btn-primary"
+          style={{ padding: '10px 20px', fontSize: '0.9rem', opacity: saving ? 0.7 : 1, cursor: saving ? 'not-allowed' : 'pointer' }}
+        >
           <Save size={16} />
-          <span>Save Changes</span>
+          <span>{saving ? 'Saving...' : 'Save Changes'}</span>
         </button>
       </div>
 

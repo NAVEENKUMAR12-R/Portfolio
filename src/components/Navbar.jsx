@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, X, Sparkles, Send, Sun, Moon } from 'lucide-react';
+import { Menu, X, Send, Sun, Moon } from 'lucide-react';
 import { GithubIcon, LinkedinIcon } from './Icons';
 import { usePortfolio } from '../context/PortfolioContext';
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, Terminal, Layout, Database, Server, Wrench, Cpu, Check, Layers, Code } from 'lucide-react';
+import { Sparkles, Terminal, Layout, Database, Server, Wrench, Cpu, Code } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 
 export default function Skills() {

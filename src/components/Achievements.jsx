@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trophy, Award, Flame, Zap, Sparkles, CheckCircle, ShieldCheck, Target } from 'lucide-react';
+import { Trophy, Award, Flame, Zap, CheckCircle } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 
 export default function Achievements() {

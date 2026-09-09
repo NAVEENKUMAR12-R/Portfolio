@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { usePortfolio } from '../../context/PortfolioContext';
-import { Plus, Trash2, Save, Tag, Layers } from 'lucide-react';
+import { Plus, Trash2, Save } from 'lucide-react';
 
 export default function SkillsAdmin({ onSaveNotification }) {
   const { skillsData, saveSectionToCloud } = usePortfolio();
@@ -8,7 +8,6 @@ export default function SkillsAdmin({ onSaveNotification }) {
   const [newCatName, setNewCatName] = useState('');
   const [newCatColor, setNewCatColor] = useState('#00f0ff');
   const [saving, setSaving] = useState(false);
-
 
   const handleAddCategory = () => {
     if (!newCatName.trim()) return;
@@ -63,7 +62,6 @@ export default function SkillsAdmin({ onSaveNotification }) {
     onSaveNotification(res?.message || 'Skills saved to cloud database!');
   };
 
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
       {/* Save Button Bar */}
@@ -72,9 +70,14 @@ export default function SkillsAdmin({ onSaveNotification }) {
           <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#f8fafc' }}>Technical Skills & Categories Manager</h3>
           <p style={{ color: '#94a3b8', fontSize: '0.88rem' }}>Add, remove, or modify categories and skill pills with mastery levels.</p>
         </div>
-        <button onClick={handleSave} className="btn-primary" style={{ padding: '10px 20px', fontSize: '0.9rem' }}>
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="btn-primary"
+          style={{ padding: '10px 20px', fontSize: '0.9rem', opacity: saving ? 0.7 : 1, cursor: saving ? 'not-allowed' : 'pointer' }}
+        >
           <Save size={16} />
-          <span>Save Changes</span>
+          <span>{saving ? 'Saving...' : 'Save Changes'}</span>
         </button>
       </div>
 

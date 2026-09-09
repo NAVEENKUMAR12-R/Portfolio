@@ -26,7 +26,7 @@ export default function Contact() {
         origin: { y: 0.8 },
         colors: ['#00f0ff', '#a855f7', '#ec4899', '#f59e0b']
       });
-    } catch (e) {}
+    } catch {}
 
     setTimeout(() => setCopied(false), 3000);
   };
@@ -74,7 +74,7 @@ export default function Contact() {
               origin: { y: 0.6 },
               colors: ['#00f0ff', '#10b981', '#a855f7', '#ffffff']
             });
-          } catch (e) {}
+          } catch {}
 
           setTimeout(() => {
             setSubmitted(false);
@@ -84,7 +84,7 @@ export default function Contact() {
           setIsSending(false);
           setErrorMessage(result.message || 'Unable to deliver message automatically. You can send it directly via your mail client.');
         }
-      } catch (err) {
+      } catch {
         setIsSending(false);
         setErrorMessage('Network error occurred. Click below to launch your email client.');
       }
@@ -100,7 +100,7 @@ export default function Contact() {
           origin: { y: 0.6 },
           colors: ['#00f0ff', '#10b981', '#a855f7', '#ffffff']
         });
-      } catch (e) {}
+      } catch {}
 
       setTimeout(() => {
         setSubmitted(false);

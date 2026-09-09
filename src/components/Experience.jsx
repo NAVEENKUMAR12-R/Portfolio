@@ -1,5 +1,5 @@
 import React from 'react';
-import { Briefcase, Calendar, MapPin, Sparkles, CheckCircle2, ChevronRight, Terminal, Layers } from 'lucide-react';
+import { Briefcase, Calendar, MapPin, Sparkles, CheckCircle2 } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 
 export default function Experience() {

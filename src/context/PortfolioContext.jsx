@@ -128,8 +128,9 @@ export function PortfolioProvider({ children }) {
 
   // Fetch portfolio data from MongoDB on initial mount
   const refreshFromCloud = useCallback(async () => {
-    setIsSyncing(true);
     try {
+      await Promise.resolve();
+      setIsSyncing(true);
       const res = await fetch('/api/portfolio');
       if (res.ok) {
         const json = await res.json();
@@ -170,7 +171,10 @@ export function PortfolioProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    refreshFromCloud();
+    const timer = setTimeout(() => {
+      refreshFromCloud();
+    }, 0);
+    return () => clearTimeout(timer);
   }, [refreshFromCloud]);
 
   // Persist on change to localStorage (offline cache)
@@ -411,6 +415,8 @@ export function PortfolioProvider({ children }) {
   );
 }
 
+// oxlint-disable-next-line react/only-export-components
+// eslint-disable-next-line react-refresh/only-export-components
 export function usePortfolio() {
   const context = useContext(PortfolioContext);
   if (!context) {

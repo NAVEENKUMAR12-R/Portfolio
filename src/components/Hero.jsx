@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { ArrowRight, Mail, Sparkles, Terminal, Code2, Layers, CheckCircle2, ChevronRight, Download } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Mail, Terminal, ChevronRight } from 'lucide-react';
 import { GithubIcon, LinkedinIcon } from './Icons';
 import { usePortfolio } from '../context/PortfolioContext';
 import HeroCanvas from './HeroCanvas';
@@ -10,21 +10,25 @@ export default function Hero() {
   const [displayText, setDisplayText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const roles = personalInfo.roles && personalInfo.roles.length > 0
-    ? personalInfo.roles
-    : ['Full-Stack Developer', 'Problem Solver', 'Competitive Programmer', 'Software Engineer'];
+  const roles = useMemo(() => {
+    return personalInfo.roles && personalInfo.roles.length > 0
+      ? personalInfo.roles
+      : ['Full-Stack Developer', 'Problem Solver', 'Competitive Programmer', 'Software Engineer'];
+  }, [personalInfo.roles]);
 
   useEffect(() => {
     const currentRole = roles[roleIndex % roles.length];
-    let typingSpeed = isDeleting ? 40 : 80;
+    const typingSpeed = isDeleting ? 40 : 80;
 
     if (!isDeleting && displayText === currentRole) {
       const timeout = setTimeout(() => setIsDeleting(true), 2000);
       return () => clearTimeout(timeout);
     } else if (isDeleting && displayText === '') {
-      setIsDeleting(false);
-      setRoleIndex((prev) => (prev + 1) % roles.length);
-      return;
+      const timeout = setTimeout(() => {
+        setIsDeleting(false);
+        setRoleIndex((prev) => (prev + 1) % roles.length);
+      }, 150);
+      return () => clearTimeout(timeout);
     }
 
     const timer = setTimeout(() => {

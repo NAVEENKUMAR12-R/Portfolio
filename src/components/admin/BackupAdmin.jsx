@@ -27,7 +27,6 @@ export default function BackupAdmin({ onSaveNotification }) {
     saveFullConfigToCloud,
     refreshFromCloud,
     cloudStatus,
-    adminSecret,
     setAdminSecret,
     lastSyncedAt
   } = usePortfolio();
@@ -154,7 +153,7 @@ export default function BackupAdmin({ onSaveNotification }) {
         confetti({ particleCount: 70, spread: 70, origin: { y: 0.6 } });
       } catch {}
       onSaveNotification('Configuration successfully imported!');
-    } catch (e) {
+    } catch {
       alert('Invalid JSON format. Please verify the syntax.');
     }
   };
@@ -171,7 +170,7 @@ export default function BackupAdmin({ onSaveNotification }) {
           confetti({ particleCount: 80, spread: 80, origin: { y: 0.6 } });
         } catch {}
         onSaveNotification(`Loaded configuration from ${file.name}!`);
-      } catch (err) {
+      } catch {
         alert('Failed to parse uploaded JSON file.');
       }
     };

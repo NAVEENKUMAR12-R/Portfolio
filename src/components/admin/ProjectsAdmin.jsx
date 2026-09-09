@@ -89,9 +89,14 @@ export default function ProjectsAdmin({ onSaveNotification }) {
             <Plus size={16} />
             <span>Add New Project</span>
           </button>
-          <button onClick={handleSave} className="btn-primary" style={{ padding: '10px 20px', fontSize: '0.9rem' }}>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="btn-primary"
+            style={{ padding: '10px 20px', fontSize: '0.9rem', opacity: saving ? 0.7 : 1, cursor: saving ? 'not-allowed' : 'pointer' }}
+          >
             <Save size={16} />
-            <span>Save Changes</span>
+            <span>{saving ? 'Saving...' : 'Save Changes'}</span>
           </button>
         </div>
       </div>

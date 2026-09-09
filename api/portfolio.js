@@ -145,7 +145,15 @@ export default async function handler(req, res) {
 
     return res.status(405).json({ success: false, message: 'Method not allowed' });
   } catch (error) {
-    console.error('MongoDB API Error:', error);
+    console.warn('MongoDB API Notice (falling back to defaults):', error.message);
+    if (req.method === 'GET') {
+      return res.status(200).json({
+        success: true,
+        source: 'local_fallback',
+        message: 'MongoDB temporarily unreachable (' + error.message + '). Serving local data.',
+        data: DEFAULT_CONFIG
+      });
+    }
     return res.status(500).json({
       success: false,
       message: 'MongoDB database operation failed: ' + error.message

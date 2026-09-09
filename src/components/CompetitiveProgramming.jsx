@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trophy, Code2, Flame, Award, ExternalLink, Zap, TrendingUp, CheckCircle, BarChart3, Star } from 'lucide-react';
+import { Trophy, Code2, Award, ExternalLink, TrendingUp, CheckCircle } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 
 export default function CompetitiveProgramming() {

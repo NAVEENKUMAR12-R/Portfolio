@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, Bug, HeartHandshake, Sparkles, CheckCircle2, Award, Terminal } from 'lucide-react';
+import { Users, Bug, HeartHandshake, CheckCircle2 } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 
 export default function Leadership() {

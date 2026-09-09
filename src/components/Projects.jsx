@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ExternalLink, Sparkles, CheckCircle2, ArrowUpRight, Layers, Film, CalendarCheck, ShieldCheck, Database, Server } from 'lucide-react';
+import { ExternalLink, Sparkles, CheckCircle2, ArrowUpRight, Film, CalendarCheck } from 'lucide-react';
 import { GithubIcon } from './Icons';
 import { usePortfolio } from '../context/PortfolioContext';
 import ProjectModal from './ProjectModal';

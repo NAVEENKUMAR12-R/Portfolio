@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowUp, Mail, Heart, Sparkles, Terminal, Code2 } from 'lucide-react';
+import { ArrowUp, Mail } from 'lucide-react';
 import { GithubIcon, LinkedinIcon } from './Icons';
 import { usePortfolio } from '../context/PortfolioContext';
 

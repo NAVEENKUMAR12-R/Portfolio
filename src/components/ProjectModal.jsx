@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, ExternalLink, CheckCircle2, Server, Database, Shield, Zap, Layers, Lock, Clock } from 'lucide-react';
+import { X, ExternalLink, CheckCircle2 } from 'lucide-react';
 import { GithubIcon } from './Icons';
 
 export default function ProjectModal({ project, onClose }) {
